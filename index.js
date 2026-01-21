@@ -1,15 +1,13 @@
 const express = require("express");
-const cors = require("cors"); // ✅ ADD HERE
+const cors = require("cors");
 const countriesRoutes = require("./routes/countriesRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // ✅ FIXED
+const PORT = process.env.PORT || 3000;
 
-// ✅ MIDDLEWARES (TOP)
-app.use(cors());          // 👈 HERE
+app.use(cors());
 app.use(express.json());
 
-// ✅ ROUTES
 app.use("/api/countries", countriesRoutes);
 
 app.get("/", (req, res) => {

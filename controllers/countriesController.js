@@ -1,52 +1,57 @@
 const countries = require("../data.json");
 
-// GET ALL COUNTRIES
+/* ===========================
+   GET ALL COUNTRIES
+   =========================== */
 const getAllCountries = (req, res) => {
-  let result = countries;
+  let result = [...countries];
 
   const { region, page = 1, limit = 10, sort } = req.query;
 
-  // 1️⃣ FILTER
+  // FILTER
   if (region) {
     result = result.filter(
-      country => country.region && country.region.toLowerCase() === region.toLowerCase()
+      c => c.region && c.region.toLowerCase() === region.toLowerCase()
     );
   }
 
-  // 2️⃣ SORT
+  // SORT
   if (sort) {
     const [field, order = "desc"] = sort.split(":");
-    const sortField = field.toLowerCase();
 
-    if (sortField === "name") {
+    if (field === "name") {
       result.sort((a, b) =>
-        order === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+        order === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
       );
-    } else if (sortField === "population") {
+    }
+
+    if (field === "population") {
       result.sort((a, b) =>
-        order === "asc" ? (a.population || 0) - (b.population || 0) : (b.population || 0) - (a.population || 0)
+        order === "asc"
+          ? (a.population || 0) - (b.population || 0)
+          : (b.population || 0) - (a.population || 0)
       );
     }
   }
 
-  // 3️⃣ PAGINATION
-  const pageNumber = Number(page);
-  const limitNumber = Number(limit);
-  const startIndex = (pageNumber - 1) * limitNumber;
-  const endIndex = startIndex + limitNumber;
+  // PAGINATION
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  const start = (pageNum - 1) * limitNum;
 
-  const paginatedData = result.slice(startIndex, endIndex);
-
-  // 4️⃣ RESPONSE
-  res.status(200).json({
+  res.json({
     total: result.length,
-    page: pageNumber,
-    limit: limitNumber,
-    data: paginatedData
+    page: pageNum,
+    limit: limitNum,
+    data: result.slice(start, start + limitNum)
   });
 };
 
-// GET COUNTRY BY ID
+/* ===========================
+   GET COUNTRY BY ID
+   =========================== */
 const getCountryById = (req, res) => {
   const id = Number(req.params.id);
   const country = countries.find(c => c.id === id);
@@ -55,48 +60,75 @@ const getCountryById = (req, res) => {
     return res.status(404).json({ message: "Country not found" });
   }
 
-  res.status(200).json(country);
+  res.json(country);
 };
 
-// SEARCH COUNTRIES
-const searchCountries = (req, res) => {
-  const { name, code } = req.query;
+/* ===========================
+   GET BY NAME (REST STYLE)
+   /api/countries/name/india
+   =========================== */
+const getCountriesByName = (req, res) => {
+  const name = req.params.name.toLowerCase();
 
-  if (!name && !code) {
-    return res.status(400).json({ message: "Please provide a name or code to search" });
-  }
-
-  let result = countries;
-
-  if (name) {
-    const lowerName = name.toLowerCase().trim();
-    result = result.filter(country =>
-      country.name.toLowerCase().includes(lowerName)
-    );
-  }
-
-  if (code) {
-    const lowerCode = code.toLowerCase().trim();
-    result = result.filter(country =>
-      country.alpha2Code.toLowerCase() === lowerCode ||
-      country.alpha3Code.toLowerCase() === lowerCode
-    );
-  }
+  const result = countries.filter(c =>
+    c.name.toLowerCase().includes(name)
+  );
 
   if (!result.length) {
     return res.status(404).json({ message: "Country not found" });
   }
 
-  res.status(200).json({
+  res.json({
     count: result.length,
     data: result
   });
 };
 
+/* ===========================
+   GET BY REGION
+   /api/countries/region/asia
+   =========================== */
+const getCountriesByRegion = (req, res) => {
+  const region = req.params.region.toLowerCase();
 
-// ✅ EXPORT ALL CONTROLLERS AT THE END
+  const result = countries.filter(
+    c => c.region && c.region.toLowerCase() === region
+  );
+
+  if (!result.length) {
+    return res.status(404).json({ message: "No countries found in this region" });
+  }
+
+  res.json({
+    count: result.length,
+    data: result
+  });
+};
+
+/* ===========================
+   GET BY CODE
+   /api/countries/code/IN
+   =========================== */
+const getCountryByCode = (req, res) => {
+  const code = req.params.code.toLowerCase();
+
+  const country = countries.find(
+    c =>
+      c.alpha2Code.toLowerCase() === code ||
+      c.alpha3Code.toLowerCase() === code
+  );
+
+  if (!country) {
+    return res.status(404).json({ message: "Country not found" });
+  }
+
+  res.json(country);
+};
+
 module.exports = {
   getAllCountries,
   getCountryById,
-  searchCountries
+  getCountriesByName,
+  getCountriesByRegion,
+  getCountryByCode
 };

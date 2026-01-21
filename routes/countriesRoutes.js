@@ -1,14 +1,32 @@
 const express = require("express");
 const router = express.Router();
-const { getAllCountries, getCountryById, searchCountries } = require("../controllers/countriesController");
 
-// ✅ 1. Search route first
-router.get("/search", searchCountries);
+const {
+  getAllCountries,
+  getCountryById,
+  getCountriesByName,
+  getCountriesByRegion,
+  getCountryByCode
+} = require("../controllers/countriesController");
 
-// ✅ 2. Get all countries
+/*
+ ROUTE ORDER IS CRITICAL
+ More specific routes FIRST
+*/
+
+// 🔍 /api/countries/name/india
+router.get("/name/:name", getCountriesByName);
+
+// 🌍 /api/countries/region/asia
+router.get("/region/:region", getCountriesByRegion);
+
+// 🏳️ /api/countries/code/IN or /IND
+router.get("/code/:code", getCountryByCode);
+
+// 📄 /api/countries?page=1&limit=10
 router.get("/", getAllCountries);
 
-// ✅ 3. Get country by ID (dynamic route last!)
+// 🆔 /api/countries/123
 router.get("/:id", getCountryById);
 
 module.exports = router;
